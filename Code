@@ -1,1 +1,1618 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Bağlama Nota ve Eğitim Stüdyosu</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: #14151b;
+    color: #e4e6eb;
+    margin: 0;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .app-card {
+    width: 100%;
+    max-width: 940px; /* Porte büyütüldü */
+    background: #1f202b;
+    border-radius: 14px;
+    padding: 16px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+  }
+  h2 { margin: 0 0 4px 0; color: #ffb703; font-size: 20px; }
+  p { margin: 0 0 14px 0; font-size: 13px; color: #9aa0a6; }
 
+  /* ================== 1. ANA EKRAN ================== */
+  #homeScreen { display: block; }
+  .folder-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+    margin-top: 10px;
+  }
+  @media(min-width: 600px) {
+    .folder-grid { grid-template-columns: 1fr 1fr; }
+  }
+  .folder-card {
+    background: #282a3a;
+    border: 2px solid #3d4157;
+    border-radius: 12px;
+    padding: 18px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  .folder-card:hover {
+    border-color: #ffb703;
+    transform: translateY(-2px);
+    background: #2e3044;
+  }
+  .folder-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 16px;
+    font-weight: bold;
+    color: #ffb703;
+  }
+  .folder-desc { font-size: 12px; color: #a5a9c2; margin-top: 6px; }
+
+  .saved-list-box {
+    margin-top: 14px;
+    max-height: 320px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .saved-item {
+    background: #1c1d27;
+    border: 1px solid #383a50;
+    border-radius: 8px;
+    padding: 10px 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .saved-title { font-weight: bold; font-size: 14px; color: #fff; }
+  .saved-meta { font-size: 11px; color: #8e92ab; margin-top: 2px; }
+
+  /* ================== 2. EDİTÖR EKRANI ================== */
+  #editorScreen { display: none; }
+  .top-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #333649;
+  }
+
+  .score-settings-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    background: #272838;
+    padding: 8px 12px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    align-items: center;
+    font-size: 12px;
+  }
+  .score-settings-bar select {
+    background: #191a24;
+    color: #ffb703;
+    border: 1px solid #474b66;
+    padding: 5px 9px;
+    border-radius: 6px;
+    font-weight: bold;
+    font-size: 12px;
+    cursor: pointer;
+  }
+
+  /* BÜYÜTÜLMÜŞ ÇOK SATIRLI PORTE */
+  .score-scroll {
+    position: relative;
+    width: 100%;
+    max-height: 400px;
+    background: #ffffff;
+    border-radius: 8px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    border: 1px solid #c8c8c8;
+    box-shadow: inset 0 0 10px rgba(0,0,0,0.06);
+    scroll-behavior: smooth;
+  }
+  #scoreSvg { display: block; width: 100%; }
+
+  /* AYAR İÇİN SEÇİLEN NOTA (TURUNCU) */
+  .selected-orange-note .note-head { fill: #f77f00 !important; }
+  .selected-orange-note .note-stem { stroke: #f77f00 !important; stroke-width: 2.2 !important; }
+  .selected-orange-note .note-arrow { fill: #f77f00 !important; font-size: 18px !important; }
+  .selected-orange-note .note-label { fill: #f77f00 !important; font-weight: bold !important; }
+  .selected-orange-note .note-glow {
+    display: block !important;
+    fill: rgba(247, 127, 0, 0.3) !important;
+    stroke: #f77f00 !important;
+  }
+
+  /* ÇALAN NOTA (KIRMIZI) */
+  .active-red-note .note-head { fill: #e63946 !important; }
+  .active-red-note .note-stem { stroke: #e63946 !important; stroke-width: 2.2 !important; }
+  .active-red-note .note-arrow { fill: #e63946 !important; font-size: 18px !important; }
+  .active-red-note .note-label { fill: #e63946 !important; font-weight: bold !important; }
+  .active-red-note .note-glow {
+    display: block !important;
+    fill: rgba(230, 57, 70, 0.3) !important;
+    stroke: #e63946 !important;
+  }
+
+  /* TEK ÇİZGİ ÇUBUK */
+  .single-track-container {
+    position: relative;
+    width: 100%;
+    height: 42px;
+    background: #12131a;
+    border: 1px solid #3d4157;
+    border-radius: 8px;
+    margin: 10px 0 6px 0;
+    overflow: hidden;
+    cursor: pointer;
+  }
+  .track-highlight {
+    position: absolute;
+    top: 0; bottom: 0;
+    background: rgba(255, 183, 3, 0.28);
+    border-left: 3px solid #2ec4b6;
+    border-right: 3px solid #e63946;
+    pointer-events: none;
+    z-index: 1;
+  }
+  .track-audio-progress {
+    position: absolute;
+    top: 0; bottom: 0;
+    width: 3.5px;
+    background: #ffffff;
+    box-shadow: 0 0 10px #ffffff;
+    pointer-events: none;
+    z-index: 4;
+    display: none;
+  }
+  .track-audio-progress::after {
+    content: "▼";
+    position: absolute;
+    top: -2px; left: -4px;
+    font-size: 10px; color: #fff;
+  }
+  .single-track-container input[type="range"] {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    -webkit-appearance: none;
+    background: transparent;
+    pointer-events: none;
+    margin: 0;
+    z-index: 2;
+  }
+  .single-track-container input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    pointer-events: auto;
+    width: 16px; height: 42px;
+    border-radius: 4px;
+    cursor: ew-resize;
+    box-shadow: 0 0 6px rgba(0,0,0,0.6);
+  }
+  #trimStart::-webkit-slider-thumb { background: #2ec4b6; border: 1.5px solid #fff; }
+  #trimEnd::-webkit-slider-thumb { background: #e63946; border: 1.5px solid #fff; }
+
+  .track-time-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: #a5a9c2;
+    margin-bottom: 8px;
+    font-family: monospace;
+  }
+
+  .playback-bar {
+    background: #272838;
+    border: 1px solid #ffb703;
+    border-radius: 8px;
+    padding: 10px;
+    margin-top: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+  .play-controls { display: flex; align-items: center; gap: 8px; }
+
+  .btn-step {
+    background: #3b3e54;
+    border: 1px solid #555a7d;
+    color: #fff;
+    width: 28px; height: 28px;
+    border-radius: 6px;
+    font-size: 15px;
+    font-weight: bold;
+    cursor: pointer;
+  }
+
+  .studio-box {
+    background: #272838;
+    border: 1px solid #3d4059;
+    border-radius: 10px;
+    padding: 12px;
+    margin-top: 12px;
+  }
+  .badge {
+    background: #393c54;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 11px;
+    color: #fff;
+  }
+
+  /* AYAR PANELİ (TURUNCU ÇERÇEVELİ) */
+  .edit-panel {
+    display: none;
+    background: #2e3042;
+    border: 2px solid #f77f00; /* Turuncu çerçeve */
+    border-radius: 8px;
+    padding: 10px;
+    margin-top: 10px;
+  }
+  .edit-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+    font-weight: bold;
+    color: #f77f00;
+    margin-bottom: 8px;
+  }
+
+  .section-title {
+    font-size: 12px;
+    font-weight: bold;
+    color: #ffb703;
+    margin: 12px 0 6px 0;
+    text-transform: uppercase;
+  }
+  .pattern-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 6px;
+  }
+  .pattern-card {
+    background: #2a2c3d;
+    border: 2px solid #3d4157;
+    border-radius: 8px;
+    padding: 6px;
+    text-align: center;
+    cursor: pointer;
+  }
+  .pattern-card.active { border-color: #ffb703; background: #373952; }
+  .pattern-title { font-size: 11px; font-weight: bold; }
+  .pattern-arrows { color: #ff4d6d; font-size: 13px; font-weight: bold; }
+
+  .slot-editor {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    background: #181924;
+    padding: 8px;
+    border-radius: 8px;
+    margin-top: 6px;
+  }
+  .slot-box {
+    background: #34374d;
+    border: 2px solid #4a4f6e;
+    border-radius: 6px;
+    padding: 4px 8px;
+    cursor: pointer;
+    text-align: center;
+  }
+  .slot-box.selected { border-color: #ffb703; background: #454969; }
+  .slot-num { font-size: 9px; color: #a5a9c2; }
+  .slot-note { font-size: 12px; font-weight: bold; }
+  .slot-arrow { font-size: 10px; color: #ff4d6d; font-weight: bold; }
+
+  .pitch-category {
+    font-size: 11px;
+    color: #a5a9c2;
+    margin: 6px 0 2px 0;
+    font-weight: 600;
+  }
+  .pitch-palette { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 6px; }
+  .btn-pitch {
+    background: #2e3144;
+    color: #fff;
+    border: 1px solid #474b66;
+    padding: 5px 8px;
+    border-radius: 5px;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .btn-pitch:active { background: #ffb703; color: #000; }
+  .btn-pitch.koma { border-color: #f77f00; color: #f77f00; }
+  .btn-pitch.ince { border-color: #2ec4b6; color: #2ec4b6; }
+
+  .action-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
+    align-items: center;
+  }
+  .btn-primary {
+    background: #ffb703;
+    color: #111;
+    border: none;
+    padding: 9px 14px;
+    border-radius: 7px;
+    font-weight: bold;
+    font-size: 12px;
+    cursor: pointer;
+  }
+  .btn-play { background: #2ec4b6; color: #000; font-size: 13px; }
+  .btn-pause { background: #e67e22; color: #fff; font-size: 13px; }
+  .btn-rewind { background: #3d4157; color: #fff; font-size: 13px; }
+  .btn-insert { background: #9b5de5; color: #fff; }
+  .btn-danger { background: #49282b; border: 1px solid #753338; color: #ff858d; }
+  .btn-action { background: #3c4059; color: #fff; border: 1px solid #555a7d; }
+  .btn-small { padding: 5px 10px; font-size: 11px; border-radius: 5px; }
+</style>
+</head>
+<body>
+
+<div class="app-card">
+
+  <!-- ======================= 1. ANA EKRAN ======================= -->
+  <div id="homeScreen">
+    <h2>Bağlama Nota ve Eğitim Stüdyosu</h2>
+    <p>Kaydettiğiniz eserleri yönetin veya sıfırdan yeni bir porte oluşturun.</p>
+
+    <div class="folder-grid">
+      <div class="folder-card" onclick="createNewSong()">
+        <div>
+          <div class="folder-header">🎼 Porte Oluştur</div>
+          <div class="folder-desc">Genişletilmiş temiz bir porte açarak bağlama tezene kalıplarıyla yeni bir türkü yazın.</div>
+        </div>
+        <div style="margin-top: 15px;">
+          <button class="btn-primary" style="width:100%;">Yeni Eser Başlat +</button>
+        </div>
+      </div>
+
+      <div class="folder-card" style="cursor:default;">
+        <div>
+          <div class="folder-header">📁 Kaydedilen Şarkılar</div>
+          <div class="folder-desc">Kayıtlı türkülerinizi görüntüleyin, açıp çalın veya silin.</div>
+        </div>
+        <div style="margin-top: 15px;">
+          <span class="badge" id="songCountBadge">0 Eser Kayıtlı</span>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top: 20px;">
+      <div style="font-size: 13px; font-weight: bold; color: #ffb703; margin-bottom: 8px;">📚 Eser Kütüphanem:</div>
+      <div id="savedSongsList" class="saved-list-box"></div>
+    </div>
+  </div>
+
+
+  <!-- ======================= 2. EDİTÖR EKRANI ======================= -->
+  <div id="editorScreen">
+    <div class="top-nav">
+      <button class="btn-primary btn-action btn-small" onclick="showHomeScreen()">⬅ Ana Ekrana Dön</button>
+      <span id="currentSongTitle" style="font-weight:bold; font-size:15px; color:#ffb703;">İsimsiz Türkü</span>
+      <button class="btn-primary btn-small" onclick="saveCurrentSongPrompt()">💾 Şarkıyı Kaydet</button>
+    </div>
+
+    <!-- ÖLÇÜ VE DONANIM AYARLARI -->
+    <div class="score-settings-bar">
+      <div>
+        <span>Ölçü Sayısı:</span>
+        <select id="timeSignatureSelect" onchange="changeTimeSignature(this.value)">
+          <option value="4/4" selected>4/4 (Dört Dörtlük)</option>
+          <option value="2/4">2/4</option>
+          <option value="3/4">3/4</option>
+          <option value="5/8">5/8</option>
+          <option value="6/8">6/8</option>
+          <option value="7/8">7/8</option>
+          <option value="9/8">9/8</option>
+          <option value="10/8">10/8</option>
+        </select>
+      </div>
+
+      <div>
+        <span>Donanım (Makam / Arıza):</span>
+        <select id="keySignatureSelect" onchange="changeKeySignature(this.value)">
+          <option value="none" selected>Doğal (Arızasız)</option>
+          <option value="sib2">Si♭2 (Hüseyni / Uşşak)</option>
+          <option value="sib">Si♭ (Standart Bemol)</option>
+          <option value="fa#3">Fa♯3 (Koma Diyez)</option>
+          <option value="fa#">Fa♯ (Standart Diyez)</option>
+          <option value="sib2_fa#3">Si♭2 + Fa♯3</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- BÜYÜTÜLMÜŞ PORTE ALANI -->
+    <div class="score-scroll" id="scoreScroll">
+      <svg id="scoreSvg" viewBox="0 0 880 180">
+        <g id="staffLinesGroup"></g>
+        <g id="notesGroup"></g>
+      </svg>
+    </div>
+
+    <!-- OYNATMA BAR (SEÇİLEN NOTADAN DEVAM EDER) -->
+    <div class="playback-bar">
+      <div class="play-controls">
+        <button id="btnPlayPause" class="btn-primary btn-play" onclick="togglePlayPause()">Başlat ▶</button>
+        <button class="btn-primary btn-rewind" onclick="rewindToStart()">⏮ Başa Al</button>
+      </div>
+
+      <div style="display:flex; align-items:center; gap:6px;">
+        <span style="font-size:12px; font-weight:bold; color:#ffb703;">⏱️ Hız (BPM):</span>
+        <button class="btn-step" onclick="adjustBpm(-1)">-</button>
+        <span class="badge" id="bpmBadge" style="font-size:13px; font-weight:bold;">75</span>
+        <button class="btn-step" onclick="adjustBpm(+1)">+</button>
+        <input type="range" id="bpmSlider" min="40" max="180" value="75" oninput="setBpm(this.value)" style="width:90px;">
+      </div>
+    </div>
+
+    <!-- SEÇİLİ NOTAYI DÜZELTME PANELİ (TURUNCU) -->
+    <div id="editPanel" class="edit-panel">
+      <div class="edit-header">
+        <span id="editLabel">🎯 Seçili Nota: Re (↓) [Buradan Başlatılabilir]</span>
+        <div>
+          <button class="btn-primary btn-small" onclick="toggleSelectedNoteArrow()">Vuruş (↓ / ↑)</button>
+          <button class="btn-primary btn-danger btn-small" onclick="deleteSelectedGroup()">Bu Kalıbı Sil ✕</button>
+          <button class="btn-primary btn-small btn-action" onclick="closeEditPanel()">Kapat</button>
+        </div>
+      </div>
+      <div style="display:flex; flex-wrap:wrap; gap:5px;">
+        <button class="btn-pitch" onclick="updateSelectedNote('Do', 75, 261.6, true)">Do</button>
+        <button class="btn-pitch" onclick="updateSelectedNote('Re', 67.5, 293.6, false)">Re</button>
+        <button class="btn-pitch" onclick="updateSelectedNote('Mi', 60, 329.6, false)">Mi</button>
+        <button class="btn-pitch" onclick="updateSelectedNote('Fa', 52.5, 349.2, false)">Fa</button>
+        <button class="btn-pitch koma" onclick="updateSelectedNote('Fa#3', 52.5, 370.0, false)">Fa♯3</button>
+        <button class="btn-pitch" onclick="updateSelectedNote('Sol', 45, 392.0, false)">Sol</button>
+        <button class="btn-pitch" onclick="updateSelectedNote('La', 37.5, 440.0, false)">La</button>
+        <button class="btn-pitch" onclick="updateSelectedNote('Si', 30, 493.8, false)">Si</button>
+        <button class="btn-pitch koma" onclick="updateSelectedNote('Sib2', 30, 466.1, false)">Si♭2</button>
+        <button class="btn-pitch ince" onclick="updateSelectedNote('Do', 22.5, 523.2, false)">Do</button>
+        <button class="btn-pitch ince" onclick="updateSelectedNote('Re', 15, 587.3, false)">Re</button>
+        <button class="btn-pitch ince" onclick="updateSelectedNote('Mi', 7.5, 659.2, false)">Mi</button>
+        <button class="btn-pitch ince" onclick="updateSelectedNote('Fa', 0, 698.4, false)">Fa</button>
+        <button class="btn-pitch ince" onclick="updateSelectedNote('Sol', -7.5, 783.9, false)">Sol</button>
+        <button class="btn-pitch ince" onclick="updateSelectedNote('La', -15, 880.0, true)">La</button>
+      </div>
+    </div>
+
+    <!-- ŞARKI PANELİ -->
+    <div class="studio-box">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+        <span style="font-size:12px; font-weight:bold; color:#ffb703;">🎵 Harici Şarkı ve Ses Stüdyosu</span>
+        <span id="audioTrackName" style="font-size:11px; color:#2ec4b6;">Müzik yüklenmedi</span>
+      </div>
+
+      <div style="display:flex; gap:8px; align-items:center;">
+        <input type="file" id="audioFileInput" accept="audio/*" style="display:none;" onchange="handleAudioUpload(event)">
+        <button class="btn-primary btn-action btn-small" onclick="document.getElementById('audioFileInput').click()">📁 Cihazdan Şarkı Seç</button>
+        <button id="btnRemoveSong" class="btn-primary btn-danger btn-small" style="display:none;" onclick="removeAudioFile()">🗑️ Şarkıyı Kaldır</button>
+      </div>
+
+      <div id="audioControlsWrap" style="display:none; margin-top:10px;">
+        <div style="display:flex; align-items:center; flex-wrap:wrap; gap:5px; margin-bottom:8px; font-size:12px;">
+          <span>Şarkı Hızı:</span>
+          <button class="btn-primary btn-small btn-action" onclick="setSpeed(0.5)">0.5x</button>
+          <button class="btn-primary btn-small btn-action" onclick="setSpeed(0.75)">0.75x</button>
+          <button class="btn-primary btn-small btn-action" onclick="setSpeed(1.0)">1.0x</button>
+          <button class="btn-primary btn-small btn-action" onclick="setSpeed(1.25)">1.25x</button>
+          <button class="btn-primary btn-small btn-action" onclick="setSpeed(1.5)">1.5x</button>
+          <button class="btn-primary btn-small btn-action" onclick="setSpeed(2.0)">2.0x</button>
+          <span class="badge" id="speedBadge">1.00x</span>
+
+          <div style="margin-left:auto; display:flex; gap:4px;">
+            <button class="btn-primary btn-small btn-action" onclick="seekRelative(-5)">-5s ⏪</button>
+            <button class="btn-primary btn-small btn-action" onclick="seekRelative(+5)">⏩ +5s</button>
+          </div>
+        </div>
+
+        <div class="single-track-container" id="singleTrackWrap" onclick="handleTrackClick(event)">
+          <div class="track-highlight" id="trackHighlight"></div>
+          <div class="track-audio-progress" id="audioPlayCursor"></div>
+          <input type="range" id="trimStart" min="0" max="100" step="0.1" value="0" oninput="onTrimInput('start', event)">
+          <input type="range" id="trimEnd" min="0" max="100" step="0.1" value="100" oninput="onTrimInput('end', event)">
+        </div>
+
+        <div class="track-time-labels">
+          <span>🟢 Başlangıç (A): <b id="startSecLabel">00:00.0</b></span>
+          <span>Konum: <b id="currentPlayPosLabel" style="color:#ffffff;">00:00.0</b></span>
+          <span>🔴 Bitiş (B): <b id="endSecLabel">00:00.0</b></span>
+        </div>
+
+        <div style="display:flex; flex-wrap:wrap; gap:6px;">
+          <button class="btn-primary btn-small" onclick="cropAudio()">✂️ Seçili Aralığı Kırp</button>
+          <button class="btn-primary btn-small btn-danger" onclick="deleteSection()">🗑️ Seçili Aralığı Sil</button>
+          <button class="btn-primary btn-small btn-action" onclick="resetToOriginalAudio()">↩️ Orijinale Dön</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- KALIP SEÇİMİ -->
+    <div class="section-title">1. Tezene Kalıbı Seçin:</div>
+    <div class="pattern-grid">
+      <div class="pattern-card active" onclick="selectPattern(0)">
+        <div class="pattern-title">Kalıp 1 (Dörtlük)</div>
+        <div class="pattern-arrows">↓</div>
+      </div>
+      <div class="pattern-card" onclick="selectPattern(1)">
+        <div class="pattern-title">Kalıp 2 (Van)</div>
+        <div class="pattern-arrows">↓ ↑</div>
+      </div>
+      <div class="pattern-card" onclick="selectPattern(2)">
+        <div class="pattern-title">Kalıp 3 (Bursa)</div>
+        <div class="pattern-arrows">↓ ↓ ↑</div>
+      </div>
+      <div class="pattern-card" onclick="selectPattern(3)">
+        <div class="pattern-title">Kalıp 4 (Karaman)</div>
+        <div class="pattern-arrows">↓ ↑ ↓</div>
+      </div>
+      <div class="pattern-card" onclick="selectPattern(4)">
+        <div class="pattern-title">Kalıp 5 (Gelibolu)</div>
+        <div class="pattern-arrows">↓ ↑ ↓ ↑</div>
+      </div>
+    </div>
+
+    <!-- KALIP İÇİ NOTA ATAMA -->
+    <div class="section-title">2. Kalıbın Notalarını Belirleyin:</div>
+    <div class="slot-editor" id="slotEditor"></div>
+
+    <div class="pitch-category">Normal:</div>
+    <div class="pitch-palette">
+      <button class="btn-pitch" onclick="setSlotPitch('Do', 75, 261.6, true)">Do</button>
+      <button class="btn-pitch" onclick="setSlotPitch('Re', 67.5, 293.6, false)">Re</button>
+      <button class="btn-pitch" onclick="setSlotPitch('Mi', 60, 329.6, false)">Mi</button>
+      <button class="btn-pitch" onclick="setSlotPitch('Fa', 52.5, 349.2, false)">Fa</button>
+      <button class="btn-pitch koma" onclick="setSlotPitch('Fa#3', 52.5, 370.0, false)">Fa♯3</button>
+      <button class="btn-pitch" onclick="setSlotPitch('Sol', 45, 392.0, false)">Sol</button>
+      <button class="btn-pitch" onclick="setSlotPitch('La', 37.5, 440.0, false)">La</button>
+      <button class="btn-pitch" onclick="setSlotPitch('Si', 30, 493.8, false)">Si</button>
+      <button class="btn-pitch koma" onclick="setSlotPitch('Sib2', 30, 466.1, false)">Si♭2</button>
+    </div>
+
+    <div class="pitch-category">İnce:</div>
+    <div class="pitch-palette">
+      <button class="btn-pitch ince" onclick="setSlotPitch('Do', 22.5, 523.2, false)">Do</button>
+      <button class="btn-pitch ince" onclick="setSlotPitch('Re', 15, 587.3, false)">Re</button>
+      <button class="btn-pitch ince" onclick="setSlotPitch('Mi', 7.5, 659.2, false)">Mi</button>
+      <button class="btn-pitch ince" onclick="setSlotPitch('Fa', 0, 698.4, false)">Fa</button>
+      <button class="btn-pitch ince" onclick="setSlotPitch('Sol', -7.5, 783.9, false)">Sol</button>
+      <button class="btn-pitch ince" onclick="setSlotPitch('La', -15, 880.0, true)">La</button>
+    </div>
+
+    <div class="action-row">
+      <button class="btn-primary" onclick="addPatternWithValidation(false)">+ Sona Ekle</button>
+      <button id="btnInsertMiddle" class="btn-primary btn-insert" onclick="addPatternWithValidation(true)">➕ Araya Ekle (Seçilenden Sonra)</button>
+      <button class="btn-primary btn-danger" onclick="clearScore()">Porteyi Temizle</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// KALIPLAR
+const PATTERNS = [
+  { id: 1, name: "Dörtlük", count: 1, beats: [1.0], arrows: ["↓"], doubleBeams: [] },
+  { id: 2, name: "Van", count: 2, beats: [0.5, 0.5], arrows: ["↓", "↑"], doubleBeams: [] },
+  { id: 3, name: "Bursa", count: 3, beats: [0.5, 0.25, 0.25], arrows: ["↓", "↓", "↑"], doubleBeams: [1, 2] },
+  { id: 4, name: "Karaman", count: 3, beats: [0.25, 0.25, 0.5], arrows: ["↓", "↑", "↓"], doubleBeams: [0, 1] },
+  { id: 5, name: "Gelibolu", count: 4, beats: [0.25, 0.25, 0.25, 0.25], arrows: ["↓", "↑", "↓", "↑"], doubleBeams: [0, 1, 2, 3] }
+];
+
+let selectedPatternIndex = 0;
+let activeSlotIndex = 0;
+let currentSlots = [];
+const defaultPitch = { name: "Re", relY: 67.5, freq: 293.6, ledger: false };
+
+let selectedGroupIdx = null;
+let selectedNoteIdx = null;
+let placedGroups = [];
+let porteBpm = 75;
+
+let currentTimeSignature = "4/4";
+let currentKeySignature = "none";
+
+let isPlaying = false;
+let flatNotes = [];
+let playIdx = 0; // Seçilen notadan başlatmak için dinamik güncellenir
+let playTimer = null;
+let activePlayingId = null;
+
+let currentSongId = null;
+let currentSongName = "İsimsiz Türkü";
+
+// SES MOTORU
+let audioCtx = null;
+let originalAudioBuffer = null;
+let currentAudioBuffer = null;
+let audioElement = new Audio();
+audioElement.preservesPitch = true;
+let playbackRate = 1.0;
+
+// BÜYÜTÜLMÜŞ PORTE GEOMETRİSİ
+const LINE_WIDTH = 880; // Genişletildi
+const LINE_HEIGHT = 165;
+let startX = 150;
+const MAX_X = 840;
+const NOTE_SPACING = 28;
+const GROUP_SPACING = 38;
+
+function getMeasureCapacity(timeSig) {
+  switch (timeSig) {
+    case "2/4": return 2.0;
+    case "3/4": return 3.0;
+    case "4/4": return 4.0;
+    case "5/8": return 2.5;
+    case "6/8": return 3.0;
+    case "7/8": return 3.5;
+    case "9/8": return 4.5;
+    case "10/8": return 5.0;
+    default: return 4.0;
+  }
+}
+
+// ================== EKRAN YÖNETİMİ & KÜTÜPHANE ==================
+function showHomeScreen() {
+  if (isPlaying) togglePlayPause();
+  document.getElementById("editorScreen").style.display = "none";
+  document.getElementById("homeScreen").style.display = "block";
+  loadSongsLibraryUI();
+}
+
+function showEditorScreen() {
+  document.getElementById("homeScreen").style.display = "none";
+  document.getElementById("editorScreen").style.display = "block";
+  document.getElementById("currentSongTitle").innerText = currentSongName;
+  document.getElementById("timeSignatureSelect").value = currentTimeSignature;
+  document.getElementById("keySignatureSelect").value = currentKeySignature;
+  renderScore();
+}
+
+function getStoredSongs() {
+  try {
+    return JSON.parse(localStorage.getItem("baglama_songs_library")) || [];
+  } catch(e) { return []; }
+}
+
+function saveStoredSongs(songs) {
+  localStorage.setItem("baglama_songs_library", JSON.stringify(songs));
+}
+
+function loadSongsLibraryUI() {
+  const list = document.getElementById("savedSongsList");
+  const songs = getStoredSongs();
+  document.getElementById("songCountBadge").innerText = `${songs.length} Eser Kayıtlı`;
+
+  if (songs.length === 0) {
+    list.innerHTML = `<div style="text-align:center; padding:20px; color:#777; font-size:13px;">
+      Henüz kayıtlı bir türkü yok.<br>"Porte Oluştur" butonuna basarak ilk eserinizi yazın.
+    </div>`;
+    return;
+  }
+
+  list.innerHTML = "";
+  songs.forEach(song => {
+    const item = document.createElement("div");
+    item.className = "saved-item";
+    item.innerHTML = `
+      <div>
+        <div class="saved-title">${song.title}</div>
+        <div class="saved-meta">Kalıp: ${song.groups.length} | Ölçü: ${song.timeSig || "4/4"} | BPM: ${song.bpm} | Tarih: ${song.date}</div>
+      </div>
+      <div style="display:flex; gap:6px;">
+        <button class="btn-primary btn-small btn-play" onclick="openSong('${song.id}')">Aç / Çal ▶</button>
+        <button class="btn-primary btn-small btn-danger" onclick="deleteSong('${song.id}')">🗑️ Sil</button>
+      </div>
+    `;
+    list.appendChild(item);
+  });
+}
+
+function createNewSong() {
+  currentSongId = "song_" + Date.now();
+  currentSongName = "Yeni Türkü " + new Date().toLocaleDateString();
+  placedGroups = [];
+  playIdx = 0;
+  currentTimeSignature = "4/4";
+  currentKeySignature = "none";
+  closeEditPanel();
+  removeAudioFile();
+  selectPattern(0);
+  addPatternWithValidation(false, true);
+  showEditorScreen();
+}
+
+function openSong(id) {
+  const songs = getStoredSongs();
+  const found = songs.find(s => s.id === id);
+  if (!found) return;
+
+  currentSongId = found.id;
+  currentSongName = found.title;
+  placedGroups = JSON.parse(JSON.stringify(found.groups));
+  currentTimeSignature = found.timeSig || "4/4";
+  currentKeySignature = found.keySig || "none";
+  setBpm(found.bpm || 75);
+  playIdx = 0;
+  closeEditPanel();
+  removeAudioFile();
+  showEditorScreen();
+}
+
+function deleteSong(id) {
+  if (confirm("Bu şarkıyı kalıcı olarak silmek istediğinize emin misiniz?")) {
+    let songs = getStoredSongs();
+    songs = songs.filter(s => s.id !== id);
+    saveStoredSongs(songs);
+    loadSongsLibraryUI();
+  }
+}
+
+function saveCurrentSongPrompt() {
+  const newName = prompt("Şarkı adını girin:", currentSongName);
+  if (!newName) return;
+  currentSongName = newName;
+  document.getElementById("currentSongTitle").innerText = currentSongName;
+
+  let songs = getStoredSongs();
+  const existingIndex = songs.findIndex(s => s.id === currentSongId);
+
+  const songData = {
+    id: currentSongId || ("song_" + Date.now()),
+    title: currentSongName,
+    bpm: porteBpm,
+    timeSig: currentTimeSignature,
+    keySig: currentKeySignature,
+    groups: placedGroups,
+    date: new Date().toLocaleDateString("tr-TR")
+  };
+
+  if (existingIndex >= 0) {
+    songs[existingIndex] = songData;
+  } else {
+    songs.unshift(songData);
+  }
+
+  saveStoredSongs(songs);
+  alert("✓ '" + currentSongName + "' başarıyla kaydedildi!");
+}
+
+function changeTimeSignature(val) {
+  currentTimeSignature = val;
+  renderScore();
+}
+
+function changeKeySignature(val) {
+  currentKeySignature = val;
+  renderScore();
+}
+
+// ================== SES VE ŞARKI YÖNETİMİ ==================
+function formatSeconds(sec) {
+  const m = Math.floor(sec / 60);
+  const s = (sec % 60).toFixed(1);
+  return `${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
+}
+
+async function handleAudioUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  document.getElementById("audioTrackName").innerText = "Yükleniyor...";
+
+  const arrayBuffer = await file.arrayBuffer();
+  audioCtx.decodeAudioData(arrayBuffer, (decoded) => {
+    originalAudioBuffer = decoded;
+    currentAudioBuffer = decoded;
+    applyBufferToAudioElement(decoded);
+
+    document.getElementById("audioTrackName").innerText = `✓ ${file.name}`;
+    document.getElementById("audioControlsWrap").style.display = "block";
+    document.getElementById("btnRemoveSong").style.display = "inline-block";
+    setupSingleTrack(decoded.duration);
+  });
+}
+
+function removeAudioFile() {
+  if (isPlaying && currentAudioBuffer) togglePlayPause();
+  originalAudioBuffer = null;
+  currentAudioBuffer = null;
+  audioElement.pause();
+  audioElement.src = "";
+  document.getElementById("audioFileInput").value = "";
+  document.getElementById("audioTrackName").innerText = "Müzik yüklenmedi";
+  document.getElementById("audioControlsWrap").style.display = "none";
+  document.getElementById("btnRemoveSong").style.display = "none";
+  document.getElementById("audioPlayCursor").style.display = "none";
+}
+
+function setupSingleTrack(maxDur) {
+  const s = document.getElementById("trimStart");
+  const e = document.getElementById("trimEnd");
+  s.max = maxDur;
+  e.max = maxDur;
+  s.value = 0;
+  e.value = maxDur;
+  updateSingleTrackVisuals();
+}
+
+function onTrimInput(handle, event) {
+  if (event) event.stopPropagation();
+  const s = document.getElementById("trimStart");
+  const e = document.getElementById("trimEnd");
+  let sVal = parseFloat(s.value);
+  let eVal = parseFloat(e.value);
+
+  if (handle === 'start' && sVal > eVal) s.value = eVal;
+  if (handle === 'end' && eVal < sVal) e.value = sVal;
+
+  updateSingleTrackVisuals();
+}
+
+function updateSingleTrackVisuals() {
+  const s = parseFloat(document.getElementById("trimStart").value);
+  const e = parseFloat(document.getElementById("trimEnd").value);
+  const max = parseFloat(document.getElementById("trimStart").max) || 1;
+
+  const leftPercent = (s / max) * 100;
+  const widthPercent = Math.max(0, ((e - s) / max) * 100);
+
+  const highlight = document.getElementById("trackHighlight");
+  highlight.style.left = leftPercent + "%";
+  highlight.style.width = widthPercent + "%";
+
+  document.getElementById("startSecLabel").innerText = formatSeconds(s);
+  document.getElementById("endSecLabel").innerText = formatSeconds(e);
+}
+
+function handleTrackClick(e) {
+  if (!currentAudioBuffer) return;
+  const rect = document.getElementById("singleTrackWrap").getBoundingClientRect();
+  const clickX = e.clientX - rect.left;
+  const percent = Math.max(0, Math.min(1, clickX / rect.width));
+  const seekTime = percent * currentAudioBuffer.duration;
+
+  audioElement.currentTime = seekTime;
+  updatePlayCursor(percent, seekTime);
+}
+
+function seekRelative(deltaSeconds) {
+  if (!currentAudioBuffer) return;
+  let target = Math.max(0, Math.min(currentAudioBuffer.duration, audioElement.currentTime + deltaSeconds));
+  audioElement.currentTime = target;
+  const percent = target / currentAudioBuffer.duration;
+  updatePlayCursor(percent, target);
+}
+
+function updatePlayCursor(percent, timeSec) {
+  const cursor = document.getElementById("audioPlayCursor");
+  cursor.style.display = "block";
+  cursor.style.left = (percent * 100) + "%";
+  document.getElementById("currentPlayPosLabel").innerText = formatSeconds(timeSec);
+}
+
+audioElement.addEventListener("timeupdate", () => {
+  if (!currentAudioBuffer) return;
+  const percent = audioElement.currentTime / currentAudioBuffer.duration;
+  updatePlayCursor(percent, audioElement.currentTime);
+});
+
+function cropAudio() {
+  if (!currentAudioBuffer) return;
+  const startSec = parseFloat(document.getElementById("trimStart").value);
+  const endSec = parseFloat(document.getElementById("trimEnd").value);
+  if (startSec >= endSec) return alert("Seçili aralık geçersiz!");
+
+  const rate = currentAudioBuffer.sampleRate;
+  const cropped = audioCtx.createBuffer(currentAudioBuffer.numberOfChannels, Math.floor((endSec - startSec) * rate), rate);
+
+  for (let ch = 0; ch < currentAudioBuffer.numberOfChannels; ch++) {
+    cropped.copyToChannel(currentAudioBuffer.getChannelData(ch).subarray(Math.floor(startSec * rate), Math.floor(endSec * rate)), ch);
+  }
+  currentAudioBuffer = cropped;
+  applyBufferToAudioElement(cropped);
+  setupSingleTrack(cropped.duration);
+  alert("✂️ Seçili aralık kırpıldı!");
+}
+
+function deleteSection() {
+  if (!currentAudioBuffer) return;
+  const startSec = parseFloat(document.getElementById("trimStart").value);
+  const endSec = parseFloat(document.getElementById("trimEnd").value);
+  if (startSec >= endSec) return alert("Silinecek aralık geçersiz!");
+
+  const rate = currentAudioBuffer.sampleRate;
+  const startSample = Math.floor(startSec * rate);
+  const endSample = Math.floor(endSec * rate);
+  const newLength = currentAudioBuffer.length - (endSample - startSample);
+  const cutBuffer = audioCtx.createBuffer(currentAudioBuffer.numberOfChannels, newLength, rate);
+
+  for (let ch = 0; ch < currentAudioBuffer.numberOfChannels; ch++) {
+    const src = currentAudioBuffer.getChannelData(ch);
+    const dest = cutBuffer.getChannelData(ch);
+    dest.set(src.subarray(0, startSample), 0);
+    dest.set(src.subarray(endSample), startSample);
+  }
+  currentAudioBuffer = cutBuffer;
+  applyBufferToAudioElement(cutBuffer);
+  setupSingleTrack(cutBuffer.duration);
+  alert("🗑️ Seçilen aralık şarkıdan silindi!");
+}
+
+function resetToOriginalAudio() {
+  if (!originalAudioBuffer) return;
+  currentAudioBuffer = originalAudioBuffer;
+  applyBufferToAudioElement(originalAudioBuffer);
+  setupSingleTrack(originalAudioBuffer.duration);
+  alert("↩️ Şarkı orijinal haline döndürüldü.");
+}
+
+function setSpeed(speed) {
+  playbackRate = speed;
+  audioElement.playbackRate = speed;
+  document.getElementById("speedBadge").innerText = speed.toFixed(2) + "x";
+}
+
+function applyBufferToAudioElement(buf) {
+  const wavBlob = bufferToWaveBlob(buf);
+  audioElement.src = URL.createObjectURL(wavBlob);
+  audioElement.playbackRate = playbackRate;
+}
+
+function bufferToWaveBlob(abuffer) {
+  const numCh = abuffer.numberOfChannels;
+  const sampleRate = abuffer.sampleRate;
+  const blockAlign = numCh * 2;
+  const dataLen = abuffer.length * blockAlign;
+  const buffer = new ArrayBuffer(44 + dataLen);
+  const view = new DataView(buffer);
+
+  function writeStr(offset, string) {
+    for (let i = 0; i < string.length; i++) view.setUint8(offset + i, string.charCodeAt(i));
+  }
+  writeStr(0, 'RIFF');
+  view.setUint32(4, 36 + dataLen, true);
+  writeStr(8, 'WAVE');
+  writeStr(12, 'fmt ');
+  view.setUint32(16, 16, true);
+  view.setUint16(20, 1, true);
+  view.setUint16(22, numCh, true);
+  view.setUint32(24, sampleRate, true);
+  view.setUint32(28, sampleRate * blockAlign, true);
+  view.setUint16(32, blockAlign, true);
+  view.setUint16(34, 16, true);
+  writeStr(36, 'data');
+  view.setUint32(40, dataLen, true);
+
+  let offset = 44;
+  for (let i = 0; i < abuffer.length; i++) {
+    for (let ch = 0; ch < numCh; ch++) {
+      let sample = Math.max(-1, Math.min(1, abuffer.getChannelData(ch)[i]));
+      view.setInt16(offset, sample < 0 ? sample * 0x8000 : sample * 0x7FFF, true);
+      offset += 2;
+    }
+  }
+  return new Blob([view], { type: 'audio/wav' });
+}
+
+// ================== PORTE, KALIP VE ÖLÇÜ MOTORU ==================
+function setBpm(val) {
+  porteBpm = parseInt(val);
+  document.getElementById("bpmSlider").value = porteBpm;
+  document.getElementById("bpmBadge").innerText = porteBpm;
+}
+
+function adjustBpm(delta) {
+  setBpm(Math.min(180, Math.max(40, porteBpm + delta)));
+}
+
+function selectPattern(idx) {
+  selectedPatternIndex = idx;
+  document.querySelectorAll(".pattern-card").forEach((c, i) => c.classList.toggle("active", i === idx));
+  const p = PATTERNS[idx];
+  currentSlots = Array.from({ length: p.count }, (_, i) => ({
+    ...defaultPitch,
+    arrow: p.arrows[i],
+    durationBeat: p.beats[i]
+  }));
+  activeSlotIndex = 0;
+  renderSlotEditor();
+}
+
+function renderSlotEditor() {
+  const container = document.getElementById("slotEditor");
+  container.innerHTML = "";
+  currentSlots.forEach((slot, i) => {
+    const box = document.createElement("div");
+    box.className = "slot-box" + (i === activeSlotIndex ? " selected" : "");
+    box.onclick = () => { activeSlotIndex = i; renderSlotEditor(); };
+    box.innerHTML = `
+      <div class="slot-num">${i + 1}. Vuruş</div>
+      <div class="slot-note">${slot.name}</div>
+      <div class="slot-arrow">${slot.arrow}</div>
+    `;
+    container.appendChild(box);
+  });
+}
+
+function setSlotPitch(name, relY, freq, ledger) {
+  if (currentSlots[activeSlotIndex]) {
+    currentSlots[activeSlotIndex] = { ...currentSlots[activeSlotIndex], name, relY, freq, ledger };
+    if (activeSlotIndex < currentSlots.length - 1) activeSlotIndex++;
+    renderSlotEditor();
+  }
+}
+
+// ÖLÇÜ KONTROLÜ VE EKLEME
+function addPatternWithValidation(isInsertMiddle = false, silent = false) {
+  const p = PATTERNS[selectedPatternIndex];
+  const patternDuration = p.beats.reduce((acc, b) => acc + b, 0);
+  const measureCapacity = getMeasureCapacity(currentTimeSignature);
+
+  let insertIndex = placedGroups.length;
+  if (isInsertMiddle) {
+    if (selectedGroupIdx === null) {
+      alert("⚠️ Araya eklemek için önce portedeki bir notaya tıklayıp konum seçmelisiniz!");
+      return;
+    }
+    insertIndex = selectedGroupIdx + 1;
+  }
+
+  let accumulatedBeats = 0;
+  for (let i = 0; i < insertIndex; i++) {
+    const gDuration = placedGroups[i].notes.reduce((acc, n) => acc + n.durationBeat, 0);
+    accumulatedBeats += gDuration;
+  }
+  const currentMeasureRemainder = accumulatedBeats % measureCapacity;
+
+  if (!silent && currentMeasureRemainder > 0 && (currentMeasureRemainder + patternDuration) > (measureCapacity + 0.001)) {
+    const remainingSpace = (measureCapacity - currentMeasureRemainder).toFixed(2);
+    alert(`⚠️ Ölçü Sınırı Uyarısı:\nSeçilen ölçü (${currentTimeSignature} = ${measureCapacity} vuruş).\nMevcut ölçüde sadece ${remainingSpace} vuruşluk yer kaldı!\nEklemek istediğiniz kalıp ise ${patternDuration} vuruştur ve ölçüyü taşır.`);
+    return;
+  }
+
+  const newGroup = {
+    patternId: p.id,
+    doubleBeams: p.doubleBeams,
+    notes: JSON.parse(JSON.stringify(currentSlots))
+  };
+
+  if (isInsertMiddle) {
+    placedGroups.splice(insertIndex, 0, newGroup);
+    selectedGroupIdx = insertIndex;
+  } else {
+    placedGroups.push(newGroup);
+  }
+
+  cleanActiveMarks();
+  renderScore();
+
+  if (!isInsertMiddle) {
+    setTimeout(() => {
+      const scrollBox = document.getElementById("scoreScroll");
+      scrollBox.scrollTop = scrollBox.scrollHeight;
+    }, 50);
+  }
+}
+
+function clearScore() {
+  if (confirm("Portedeki notaları temizlemek istediğinize emin misiniz?")) {
+    placedGroups = [];
+    playIdx = 0;
+    cleanActiveMarks();
+    closeEditPanel();
+    renderScore();
+  }
+}
+
+// ================== ÖLÇÜ BÖLÜNMEZ YERLEŞİM VE BÜYÜTÜLMÜŞ PORTE ==================
+function renderScore() {
+  const linesGroup = document.getElementById("staffLinesGroup");
+  const notesG = document.getElementById("notesGroup");
+  const svg = document.getElementById("scoreSvg");
+  linesGroup.innerHTML = "";
+  notesG.innerHTML = "";
+
+  // Büyütülen donanım için başlangıç payı artırıldı
+  startX = (currentKeySignature !== "none") ? 165 : 140;
+  const measureCapacity = getMeasureCapacity(currentTimeSignature);
+
+  // ÖNCELİKLE KALIPLARI ÖLÇÜ GRUPLARINA AYIR (ÖLÇÜ KESİNLİKLE BÖLÜNMEZ!)
+  const measures = [];
+  let currentMeasure = { groups: [], totalBeats: 0, width: 0 };
+
+  placedGroups.forEach((group, gIdx) => {
+    group.originalIndex = gIdx;
+    const gDuration = group.notes.reduce((acc, n) => acc + n.durationBeat, 0);
+    const gWidth = (group.notes.length * NOTE_SPACING) + GROUP_SPACING;
+
+    currentMeasure.groups.push(group);
+    currentMeasure.totalBeats += gDuration;
+    currentMeasure.width += gWidth;
+
+    if (Math.abs(currentMeasure.totalBeats - measureCapacity) < 0.001 || currentMeasure.totalBeats >= measureCapacity) {
+      currentMeasure.width += 20; // Barline ve boşluk payı
+      measures.push(currentMeasure);
+      currentMeasure = { groups: [], totalBeats: 0, width: 0 };
+    }
+  });
+
+  if (currentMeasure.groups.length > 0) {
+    measures.push(currentMeasure);
+  }
+
+  // ÖLÇÜLERİ SIRALARA YERLEŞTİR (ÖLÇÜ SATIRA SIĞMIYORSA BÜTÜN HALDE ALT SIRAYA GEÇER)
+  let currentSystem = 0;
+  let cursorX = startX;
+
+  measures.forEach((m, mIdx) => {
+    // Ölçü satır sonunu aşıyorsa ve satırın başında değilsek -> Komple alt satıra geç!
+    if (cursorX + m.width > MAX_X && cursorX > startX) {
+      currentSystem++;
+      cursorX = startX;
+    }
+
+    m.groups.forEach((group, gInM) => {
+      group.systemIndex = currentSystem;
+      group.startX = cursorX;
+      const gWidth = (group.notes.length * NOTE_SPACING) + GROUP_SPACING;
+      cursorX += gWidth;
+
+      group.closesMeasure = false;
+      // Ölçünün son kalıbı ise barline çizilecek
+      if (gInM === m.groups.length - 1 && measures.length > 0) {
+        group.closesMeasure = true;
+        group.measureNum = mIdx + 1;
+        group.barlineX = cursorX - 10;
+        cursorX += 16;
+      }
+    });
+  });
+
+  const totalSystems = currentSystem + 1;
+  const totalSvgHeight = totalSystems * LINE_HEIGHT + 25;
+  svg.setAttribute("viewBox", `0 0 ${LINE_WIDTH} ${totalSvgHeight}`);
+  svg.style.height = totalSvgHeight + "px";
+
+  // 1. Çizgiler, BÜYÜTÜLMÜŞ Sol Anahtarı, Donanım ve Ölçü Sayıları
+  for (let s = 0; s < totalSystems; s++) {
+    const baseY = 55 + (s * LINE_HEIGHT);
+    const sysG = document.createElementNS("http://www.w3.org/2000/svg", "g");
+
+    // 5 Çizgi (Fa, Re, Si, Sol, Mi)
+    for (let l = 0; l < 5; l++) {
+      const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+      const ly = baseY + (l * 15);
+      line.setAttribute("x1", "15"); line.setAttribute("y1", ly);
+      line.setAttribute("x2", LINE_WIDTH - 15); line.setAttribute("y2", ly);
+      line.setAttribute("stroke", "#222"); line.setAttribute("stroke-width", "1.2");
+      sysG.appendChild(line);
+    }
+
+    const startBar = document.createElementNS("http://www.w3.org/2000/svg", "line");
+    startBar.setAttribute("x1", "15"); startBar.setAttribute("y1", baseY);
+    startBar.setAttribute("x2", "15"); startBar.setAttribute("y2", baseY + 60);
+    startBar.setAttribute("stroke", "#222"); startBar.setAttribute("stroke-width", "1.5");
+    sysG.appendChild(startBar);
+
+    const endBar = document.createElementNS("http://www.w3.org/2000/svg", "line");
+    endBar.setAttribute("x1", LINE_WIDTH - 15); endBar.setAttribute("y1", baseY);
+    endBar.setAttribute("x2", LINE_WIDTH - 15); endBar.setAttribute("y2", baseY + 60);
+    endBar.setAttribute("stroke", "#222"); endBar.setAttribute("stroke-width", "1.5");
+    sysG.appendChild(endBar);
+
+    // BÜYÜTÜLMÜŞ SOL ANAHTARI (Font-size 74)
+    const clef = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    clef.setAttribute("x", "18"); clef.setAttribute("y", baseY + 58);
+    clef.setAttribute("font-family", "serif"); clef.setAttribute("font-size", "74");
+    clef.setAttribute("fill", "#111"); clef.textContent = "𝄞";
+    sysG.appendChild(clef);
+
+    // BÜYÜTÜLMÜŞ DONANIM (Arıza İşaretleri: Si♭2, Fa♯3)
+    let keyX = 58;
+    if (currentKeySignature.includes("sib2")) {
+      const sib = document.createElementNS("http://www.w3.org/2000/svg", "text");
+      sib.setAttribute("x", keyX); sib.setAttribute("y", baseY + 36);
+      sib.setAttribute("font-size", "22"); sib.setAttribute("font-weight", "bold"); sib.setAttribute("fill", "#c0392b");
+      sib.textContent = "♭²";
+      sysG.appendChild(sib);
+      keyX += 22;
+    } else if (currentKeySignature.includes("sib")) {
+      const sib = document.createElementNS("http://www.w3.org/2000/svg", "text");
+      sib.setAttribute("x", keyX); sib.setAttribute("y", baseY + 36);
+      sib.setAttribute("font-size", "24"); sib.setAttribute("fill", "#222");
+      sib.textContent = "♭";
+      sysG.appendChild(sib);
+      keyX += 20;
+    }
+
+    if (currentKeySignature.includes("fa#3")) {
+      const fas = document.createElementNS("http://www.w3.org/2000/svg", "text");
+      fas.setAttribute("x", keyX); fas.setAttribute("y", baseY + 14);
+      fas.setAttribute("font-size", "20"); fas.setAttribute("font-weight", "bold"); fas.setAttribute("fill", "#c0392b");
+      fas.textContent = "♯³";
+      sysG.appendChild(fas);
+      keyX += 22;
+    } else if (currentKeySignature.includes("fa#")) {
+      const fas = document.createElementNS("http://www.w3.org/2000/svg", "text");
+      fas.setAttribute("x", keyX); fas.setAttribute("y", baseY + 14);
+      fas.setAttribute("font-size", "22"); fas.setAttribute("fill", "#222");
+      fas.textContent = "♯";
+      sysG.appendChild(fas);
+      keyX += 20;
+    }
+
+    // BÜYÜTÜLMÜŞ ÖLÇÜ SAYISI (Font-size 28)
+    const timeParts = currentTimeSignature.split("/");
+    const timeX = keyX + 12;
+    const numTop = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    numTop.setAttribute("x", timeX); numTop.setAttribute("y", baseY + 26);
+    numTop.setAttribute("font-size", "28"); numTop.setAttribute("font-weight", "bold");
+    numTop.setAttribute("text-anchor", "middle"); numTop.setAttribute("fill", "#111");
+    numTop.textContent = timeParts[0];
+    sysG.appendChild(numTop);
+
+    const numBot = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    numBot.setAttribute("x", timeX); numBot.setAttribute("y", baseY + 56);
+    numBot.setAttribute("font-size", "28"); numBot.setAttribute("font-weight", "bold");
+    numBot.setAttribute("text-anchor", "middle"); numBot.setAttribute("fill", "#111");
+    numBot.textContent = timeParts[1];
+    sysG.appendChild(numBot);
+
+    linesGroup.appendChild(sysG);
+  }
+
+  // 2. Notalar ve Ölçü Çizgileri
+  placedGroups.forEach((group, gIdx) => {
+    const s = group.systemIndex;
+    const baseY = 55 + (s * LINE_HEIGHT);
+    const groupG = document.createElementNS("http://www.w3.org/2000/svg", "g");
+
+    const noteAbsY = group.notes.map(n => baseY + n.relY);
+    const minY = Math.min(...noteAbsY);
+    const stemTop = minY - 26;
+    const notePositions = [];
+
+    group.notes.forEach((note, nIdx) => {
+      const nx = group.startX + (nIdx * NOTE_SPACING);
+      const ny = baseY + note.relY;
+      note.renderX = nx; note.renderY = ny; note.systemIndex = s;
+      notePositions.push({ x: nx, y: ny });
+
+      const noteDomId = `note_el_${gIdx}_${nIdx}`;
+      note.domId = noteDomId;
+      note.gIdx = gIdx;
+      note.nIdx = nIdx;
+
+      // AYAR İÇİN SEÇİLİ NOTA (TURUNCU)
+      const isSelected = (selectedGroupIdx === gIdx && selectedNoteIdx === nIdx);
+      // ÇALAN NOTA (KIRMIZI)
+      const isCurrentActive = (activePlayingId === noteDomId);
+
+      const noteItemG = document.createElementNS("http://www.w3.org/2000/svg", "g");
+      noteItemG.setAttribute("id", noteDomId);
+      noteItemG.style.cursor = "pointer";
+
+      if (isCurrentActive) {
+        noteItemG.classList.add("active-red-note");
+      } else if (isSelected) {
+        noteItemG.classList.add("selected-orange-note");
+      }
+
+      noteItemG.onclick = (e) => { e.stopPropagation(); selectPlacedNote(gIdx, nIdx); };
+
+      const hitBox = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+      hitBox.setAttribute("x", nx - 12); hitBox.setAttribute("y", stemTop - 6);
+      hitBox.setAttribute("width", "24"); hitBox.setAttribute("height", (ny - stemTop) + 36);
+      hitBox.setAttribute("fill", "transparent");
+      noteItemG.appendChild(hitBox);
+
+      // Parlama Aurası
+      const glow = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+      glow.setAttribute("class", "note-glow");
+      glow.setAttribute("cx", nx); glow.setAttribute("cy", ny); glow.setAttribute("r", "12");
+      glow.style.display = (isSelected || isCurrentActive) ? "block" : "none";
+      noteItemG.appendChild(glow);
+
+      if (note.ledger) {
+        const led = document.createElementNS("http://www.w3.org/2000/svg", "line");
+        led.setAttribute("x1", nx - 10); led.setAttribute("y1", ny);
+        led.setAttribute("x2", nx + 10); led.setAttribute("y2", ny);
+        led.setAttribute("stroke", "#222"); led.setAttribute("stroke-width", "1.4");
+        noteItemG.appendChild(led);
+      }
+
+      const head = document.createElementNS("http://www.w3.org/2000/svg", "ellipse");
+      head.setAttribute("class", "note-head");
+      head.setAttribute("cx", nx); head.setAttribute("cy", ny);
+      head.setAttribute("rx", "5.8"); head.setAttribute("ry", "4.3");
+      head.setAttribute("fill", "#111");
+      head.setAttribute("transform", `rotate(-25 ${nx} ${ny})`);
+      noteItemG.appendChild(head);
+
+      const stem = document.createElementNS("http://www.w3.org/2000/svg", "line");
+      stem.setAttribute("class", "note-stem");
+      const stemX = nx + 5;
+      const targetTop = (group.notes.length === 1) ? (ny - 26) : stemTop;
+      stem.setAttribute("x1", stemX); stem.setAttribute("y1", ny - 1);
+      stem.setAttribute("x2", stemX); stem.setAttribute("y2", targetTop);
+      stem.setAttribute("stroke", "#111");
+      stem.setAttribute("stroke-width", "1.6");
+      noteItemG.appendChild(stem);
+
+      const arr = document.createElementNS("http://www.w3.org/2000/svg", "text");
+      arr.setAttribute("class", "note-arrow");
+      arr.setAttribute("x", nx); arr.setAttribute("y", baseY + 86);
+      arr.setAttribute("font-size", "15"); arr.setAttribute("font-weight", "bold");
+      arr.setAttribute("text-anchor", "middle");
+      arr.setAttribute("fill", "#ff4d6d");
+      arr.textContent = note.arrow;
+      noteItemG.appendChild(arr);
+
+      const lbl = document.createElementNS("http://www.w3.org/2000/svg", "text");
+      lbl.setAttribute("class", "note-label");
+      lbl.setAttribute("x", nx); lbl.setAttribute("y", baseY + 102);
+      lbl.setAttribute("font-size", "10"); lbl.setAttribute("text-anchor", "middle");
+      lbl.setAttribute("fill", "#666");
+      lbl.textContent = note.name;
+      noteItemG.appendChild(lbl);
+
+      groupG.appendChild(noteItemG);
+    });
+
+    if (group.notes.length > 1) {
+      const firstX = notePositions[0].x + 5;
+      const lastX = notePositions[notePositions.length - 1].x + 5;
+
+      const beam1 = document.createElementNS("http://www.w3.org/2000/svg", "line");
+      beam1.setAttribute("x1", firstX); beam1.setAttribute("y1", stemTop);
+      beam1.setAttribute("x2", lastX); beam1.setAttribute("y2", stemTop);
+      beam1.setAttribute("stroke", "#111"); beam1.setAttribute("stroke-width", "3.2");
+      groupG.appendChild(beam1);
+
+      if (group.doubleBeams.length > 1) {
+        const startSubX = notePositions[group.doubleBeams[0]].x + 5;
+        const endSubX = notePositions[group.doubleBeams[group.doubleBeams.length - 1]].x + 5;
+        const beam2 = document.createElementNS("http://www.w3.org/2000/svg", "line");
+        beam2.setAttribute("x1", startSubX); beam2.setAttribute("y1", stemTop + 5);
+        beam2.setAttribute("x2", endSubX); beam2.setAttribute("y2", stemTop + 5);
+        beam2.setAttribute("stroke", "#111"); beam2.setAttribute("stroke-width", "2.8");
+        groupG.appendChild(beam2);
+      }
+    }
+
+    // ÖLÇÜ ÇİZGİSİ
+    if (group.closesMeasure) {
+      const barline = document.createElementNS("http://www.w3.org/2000/svg", "line");
+      barline.setAttribute("x1", group.barlineX); barline.setAttribute("y1", baseY);
+      barline.setAttribute("x2", group.barlineX); barline.setAttribute("y2", baseY + 60);
+      barline.setAttribute("stroke", "#111"); barline.setAttribute("stroke-width", "1.6");
+      groupG.appendChild(barline);
+
+      const mNum = document.createElementNS("http://www.w3.org/2000/svg", "text");
+      mNum.setAttribute("x", group.barlineX); mNum.setAttribute("y", baseY - 4);
+      mNum.setAttribute("font-size", "10"); mNum.setAttribute("font-weight", "bold");
+      mNum.setAttribute("fill", "#888"); mNum.setAttribute("text-anchor", "middle");
+      mNum.textContent = group.measureNum;
+      groupG.appendChild(mNum);
+    }
+
+    notesG.appendChild(groupG);
+  });
+}
+
+// TEMİZLEME YARDIMCISI
+function cleanActiveMarks() {
+  document.querySelectorAll('.active-red-note').forEach(el => el.classList.remove('active-red-note'));
+  document.querySelectorAll('.selected-orange-note').forEach(el => el.classList.remove('selected-orange-note'));
+  document.querySelectorAll('.note-glow').forEach(el => el.style.display = 'none');
+  activePlayingId = null;
+}
+
+// ================== NOTA SEÇİMİ (TURUNCU) & ORADAN BAŞLATMA ==================
+function selectPlacedNote(gIdx, nIdx) {
+  selectedGroupIdx = gIdx;
+  selectedNoteIdx = nIdx;
+  const note = placedGroups[gIdx].notes[nIdx];
+  playSynth(note.freq, 0.2);
+
+  // Araya ekle butonunun metnini güncelle
+  const insertBtn = document.getElementById("btnInsertMiddle");
+  insertBtn.innerText = `➕ ${note.name} Notasının Yanına Ekle`;
+
+  const panel = document.getElementById("editPanel");
+  panel.style.display = "block";
+  document.getElementById("editLabel").innerText = `🎯 Ayar İçin Seçildi: ${note.name} (${note.arrow}) [Başlat'a basınca buradan çalar]`;
+
+  // ÇALMA SIRASINI TAM BU NOTAYA HİZALA (ORADAN BAŞLASIN DİYE)
+  let targetFlatIndex = 0;
+  for (let g = 0; g < gIdx; g++) {
+    targetFlatIndex += placedGroups[g].notes.length;
+  }
+  targetFlatIndex += nIdx;
+  playIdx = targetFlatIndex;
+
+  // Başlat butonunu bilgilendirici yap
+  if (!isPlaying) {
+    document.getElementById("btnPlayPause").innerText = `Bu Notadan Başlat ▶`;
+  }
+
+  cleanActiveMarks();
+  renderScore();
+}
+
+function updateSelectedNote(name, relY, freq, ledger) {
+  if (selectedGroupIdx === null || selectedNoteIdx === null) return;
+  const target = placedGroups[selectedGroupIdx].notes[selectedNoteIdx];
+  target.name = name; target.relY = relY; target.freq = freq; target.ledger = ledger;
+  playSynth(freq, 0.2);
+  cleanActiveMarks();
+  renderScore();
+}
+
+function toggleSelectedNoteArrow() {
+  if (selectedGroupIdx === null || selectedNoteIdx === null) return;
+  const target = placedGroups[selectedGroupIdx].notes[selectedNoteIdx];
+  target.arrow = target.arrow === "↓" ? "↑" : "↓";
+  renderScore();
+}
+
+function deleteSelectedGroup() {
+  if (selectedGroupIdx === null) return;
+  placedGroups.splice(selectedGroupIdx, 1);
+  closeEditPanel();
+  cleanActiveMarks();
+  renderScore();
+}
+
+function closeEditPanel() {
+  selectedGroupIdx = null; selectedNoteIdx = null;
+  document.getElementById("btnInsertMiddle").innerText = "➕ Araya Ekle (Seçilenden Sonra)";
+  document.getElementById("editPanel").style.display = "none";
+  if (!isPlaying) document.getElementById("btnPlayPause").innerText = "Başlat ▶";
+  cleanActiveMarks();
+  renderScore();
+}
+
+// ================== GELİŞMİŞ ÇALMA MOTORU ==================
+function playSynth(freq, dur) {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = "triangle";
+  osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+  gain.gain.setValueAtTime(0.35, audioCtx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur);
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+  osc.start();
+  osc.stop(audioCtx.currentTime + dur);
+}
+
+function stepPlay() {
+  if (!isPlaying || flatNotes.length === 0) return;
+
+  if (playIdx >= flatNotes.length) {
+    playIdx = 0; // Başa sar
+  }
+
+  cleanActiveMarks();
+
+  const note = flatNotes[playIdx];
+  const beatSec = (60 / porteBpm) / playbackRate;
+  const duration = note.durationBeat * beatSec;
+
+  // ÇALMA SIRASINDA KIRMIZI OLUR
+  activePlayingId = note.domId;
+  const currentEl = document.getElementById(note.domId);
+  if (currentEl) currentEl.classList.add("active-red-note");
+
+  // Ekranı satır değiştikçe yumuşakça kaydır
+  const scrollBox = document.getElementById("scoreScroll");
+  const targetScrollY = note.systemIndex * LINE_HEIGHT;
+  if (scrollBox.scrollTop !== targetScrollY) {
+    scrollBox.scrollTop = targetScrollY;
+  }
+
+  if (!currentAudioBuffer) {
+    playSynth(note.freq, duration * 0.9);
+  }
+
+  playIdx++;
+  playTimer = setTimeout(stepPlay, duration * 1000);
+}
+
+// OYNAT / DURAKLAT (TURUNCU NOTADAN BAŞLAR VEYA KALDIĞI YERDEN DEVAM EDER)
+function togglePlayPause() {
+  const btn = document.getElementById("btnPlayPause");
+  isPlaying = !isPlaying;
+
+  if (isPlaying) {
+    flatNotes = [];
+    placedGroups.forEach(g => g.notes.forEach(n => flatNotes.push(n)));
+
+    if (flatNotes.length === 0) {
+      alert("Lütfen porteye en az bir nota kalıbı ekleyin!");
+      isPlaying = false;
+      return;
+    }
+
+    if (playIdx >= flatNotes.length) playIdx = 0;
+
+    btn.innerText = "Duraklat ⏸";
+    btn.className = "btn-primary btn-pause";
+
+    if (currentAudioBuffer) {
+      audioElement.play();
+    }
+    stepPlay();
+  } else {
+    // DURAKLATILDI: Kırmızı işaret durduğu notada sabit kalır
+    btn.innerText = "Devam Et ▶";
+    btn.className = "btn-primary btn-play";
+    clearTimeout(playTimer);
+
+    if (currentAudioBuffer) {
+      audioElement.pause();
+    }
+  }
+}
+
+function rewindToStart() {
+  playIdx = 0;
+  if (currentAudioBuffer) {
+    audioElement.currentTime = 0;
+    updatePlayCursor(0, 0);
+  }
+
+  cleanActiveMarks();
+
+  flatNotes = [];
+  placedGroups.forEach(g => g.notes.forEach(n => flatNotes.push(n)));
+
+  if (flatNotes.length > 0) {
+    activePlayingId = flatNotes[0].domId;
+    const firstEl = document.getElementById(activePlayingId);
+    if (firstEl) firstEl.classList.add("active-red-note");
+  }
+
+  document.getElementById("scoreScroll").scrollTop = 0;
+
+  if (!isPlaying) {
+    document.getElementById("btnPlayPause").innerText = "Başlat ▶";
+    document.getElementById("btnPlayPause").className = "btn-primary btn-play";
+  }
+}
+
+// UYGULAMA İLK BAŞLATMA
+showHomeScreen();
+</script>
+</body>
+</html>
