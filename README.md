@@ -1,0 +1,2 @@
+# sazcal.io
+Deneme Uygulamam
